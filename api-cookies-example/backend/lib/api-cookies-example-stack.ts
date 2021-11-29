@@ -15,6 +15,8 @@ export class ApiCookiesStack extends cdk.Stack {
 
     // Api
     const api = new apiGw.RestApi(this, "setCookiesApi", {
+      endpointTypes: [apiGw.EndpointType.REGIONAL],
+
       // handler: lambdaFn,
       apiKeySourceType: apiGw.ApiKeySourceType.HEADER,
       // proxy: false,
@@ -31,6 +33,15 @@ export class ApiCookiesStack extends cdk.Stack {
     // Lambda Integration
     const lambdaIntegration = new apiGw.LambdaIntegration(lambdaFn, {
       proxy: false,
+      // Setting request mapping template to get the headers in the lambda function
+      // Reference https://kennbrodhagen.net/2015/12/02/how-to-access-http-headers-using-aws-api-gateway-and-lambda/
+      requestTemplates: {
+        "application/json":
+          '{"body" : $input.json("$"),"headers": {#foreach($param in $input.params().header.keySet())"$param": "$util.escapeJavaScript($input.params().header.get($param))" #if($foreach.hasNext),#end#end  }}',
+      },
+      // requestParameters: {
+      //   "method.request.header.Cookie": "Cookie",
+      // },
       integrationResponses: [
         {
           statusCode: "200",
@@ -39,7 +50,8 @@ export class ApiCookiesStack extends cdk.Stack {
               "'http://localhost:3000'",
             "method.response.header.Set-Cookie":
               "integration.response.body.headers.Set-Cookie",
-            "method.response.header.Access-Control-Allow-Credentials": "'true'",
+            "method.response.header.Access-Control-Allow-Credentials":
+              "integration.response.body.headers.Access-Control-Allow-Credentials",
           },
         },
       ],
@@ -110,6 +122,8 @@ export function addCorsOptions(apiResource: apiGw.IResource) {
             "method.response.header.Access-Control-Allow-Credentials": "'true'",
             "method.response.header.Access-Control-Allow-Methods":
               "'POST,OPTIONS'", // modify this based on methods
+            "method.response.header.Set-Cookie":
+              "integration.response.body.headers.Set-Cookie",
           },
         },
       ],
@@ -127,6 +141,7 @@ export function addCorsOptions(apiResource: apiGw.IResource) {
             "method.response.header.Access-Control-Allow-Methods": true,
             "method.response.header.Access-Control-Allow-Credentials": true, // TRUE IF USING COGNITO
             "method.response.header.Access-Control-Allow-Origin": true,
+            "method.response.header.Set-Cookie": true,
           },
         },
       ],

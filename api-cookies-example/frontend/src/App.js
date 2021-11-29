@@ -26,10 +26,13 @@ function App() {
     await axios
       .post(
         "https://3c461g3x25.execute-api.ap-south-1.amazonaws.com/prod/signup",
-        "",
+        { email: "hamzah@abc.com" },
         {
+          mode: "cors",
+          credentials: "include",
           withCredentials: true,
           headers: {
+            "Content-Type": "application/json",
             "x-api-key": "CWtpiJIijL6RBI0y0bnBs94wljKqTieP7MOATXOl",
           },
         }
